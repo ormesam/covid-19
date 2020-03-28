@@ -19,6 +19,7 @@ namespace Web.Utility {
                 yield return new Country {
                     Name = item.Key,
                     Records = item.Value
+                        .Where(i => i.Confirmed > 0)
                         .Select(i => new Record {
                             Date = DateTime.Parse(i.Date),
                             Confirmed = i.Confirmed,

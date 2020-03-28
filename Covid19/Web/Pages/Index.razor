@@ -19,7 +19,7 @@
         <tbody>
             @foreach (var country in Countries.OrderBy(i => i.Name)) {
                 <tr>
-                    <td>@country.Name</td>
+                    <td><a href="/charts/@country.Name">@country.Name</a></td>
                     <td>@country.CurrentConfirmed</td>
                     <td>@country.CurrentRecovered</td>
                     <td>@country.CurrentDeaths</td>
@@ -28,6 +28,10 @@
             }
         </tbody>
     </table>
+
+    <div class="py-5">
+        <a href="https://github.com/pomber/covid19" target="_blank">Data from Pomber/Covid19</a>
+    </div>
 }
 
 @code {
