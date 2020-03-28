@@ -1,0 +1,158 @@
+﻿@page "/charts"
+@inject HttpClient Http
+@using ChartJs.Blazor.Charts
+@using ChartJs.Blazor.ChartJS.Common.Properties
+@using ChartJs.Blazor.ChartJS.Common.Enums
+@using ChartJs.Blazor.ChartJS.Common.Axes
+@using ChartJs.Blazor.ChartJS.Common.Axes.Ticks
+@using ChartJs.Blazor.ChartJS.Common.Handlers
+@using ChartJs.Blazor.ChartJS.Common.Time
+@using ChartJs.Blazor.ChartJS.LineChart
+@using ChartJs.Blazor.Util
+@using System.Drawing;
+
+<h1>Cases in Charts</h1>
+
+@if (Countries == null) {
+    <p><em>Loading...</em></p>
+} else {
+    <select @bind="SelectedCountryName">
+        <option>-- Select Country --</option>
+        @foreach (var country in Countries.OrderBy(i => i.Name)) {
+            <option value="@country.Name">@country.Name</option>
+        }
+    </select>
+
+    @if (SelectedCountry != null) {
+        <ChartJsLineChart @ref="lineChartJs" Config="@lineConfig" Width="600" Height="300" />
+    }
+}
+
+@code {
+    IEnumerable<Country> Countries;
+    string selectedCountryName;
+    Country SelectedCountry => Countries.SingleOrDefault(i => i.Name == SelectedCountryName);
+    LineConfig lineConfig;
+    ChartJsLineChart lineChartJs;
+    LineDataset<TimeTuple<int>> confirmedDataSet;
+    LineDataset<TimeTuple<int>> deathsDataSet;
+    LineDataset<TimeTuple<int>> recoveredDataSet;
+    LineDataset<TimeTuple<int>> currentDataSet;
+
+    string SelectedCountryName {
+        get => selectedCountryName;
+        set {
+            if (selectedCountryName != value) {
+                selectedCountryName = value;
+                OnCountryChanged();
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync() {
+        confirmedDataSet = CreateDataSet(Color.Orange, "Confirmed");
+        deathsDataSet = CreateDataSet(Color.Red, "Deaths");
+        recoveredDataSet = CreateDataSet(Color.Green, "Recovered");
+        currentDataSet = CreateDataSet(Color.Yellow, "Current");
+
+        lineConfig = new LineConfig {
+            Options = new LineOptions {
+                Responsive = true,
+                Title = new OptionsTitle {
+                    Display = true,
+                },
+                Legend = new Legend {
+                    Position = Position.Right,
+                    Labels = new LegendLabelConfiguration {
+                        UsePointStyle = true,
+                    }
+                },
+                Tooltips = new Tooltips {
+                    Mode = InteractionMode.Nearest,
+                    Intersect = false,
+                },
+                Scales = new Scales {
+                    xAxes = new List<CartesianAxis>
+                    {
+                        new TimeAxis
+                        {
+                            Distribution = TimeDistribution.Linear,
+                            Ticks = new TimeTicks
+                            {
+                                Source = TickSource.Data,
+                            },
+                            Time = new TimeOptions
+                            {
+                                Unit = TimeMeasurement.Day,
+                                Round = TimeMeasurement.Day,
+                                TooltipFormat = "DD/MM/YYYY",
+                            },
+                            ScaleLabel = new ScaleLabel
+                            {
+                                LabelString = "Date",
+                            }
+                        }
+                    }
+                },
+                Hover = new LineOptionsHover {
+                    Intersect = true,
+                    Mode = InteractionMode.Y,
+                }
+            }
+        };
+
+        lineConfig.Data.Datasets.Add(confirmedDataSet);
+        lineConfig.Data.Datasets.Add(deathsDataSet);
+        lineConfig.Data.Datasets.Add(recoveredDataSet);
+        lineConfig.Data.Datasets.Add(currentDataSet);
+
+        var jsonData = await Http.GetJsonAsync<IDictionary<string, JsonData[]>>("https://pomber.github.io/covid19/timeseries.json");
+
+        Countries = ParseRecords(jsonData);
+    }
+
+    private IEnumerable<Country> ParseRecords(IDictionary<string, JsonData[]> jsonData) {
+        foreach (var item in jsonData) {
+            yield return new Country {
+                Name = item.Key,
+                Records = item.Value
+                    .Select(i => new Record {
+                        Date = DateTime.Parse(i.Date),
+                        Confirmed = i.Confirmed,
+                        Deaths = i.Deaths,
+                        Recovered = i.Recovered,
+                    })
+                    .OrderBy(i => i.Date)
+                    .ToList(),
+            };
+        }
+    }
+
+    private void OnCountryChanged() {
+        if (SelectedCountry == null) {
+            return;
+        }
+
+        confirmedDataSet.RemoveAll(i => true);
+        deathsDataSet.RemoveAll(i => true);
+        recoveredDataSet.RemoveAll(i => true);
+        currentDataSet.RemoveAll(i => true);
+
+        confirmedDataSet.AddRange(SelectedCountry.Records.Select(p => new TimeTuple<int>(new Moment(p.Date), p.Confirmed)));
+        deathsDataSet.AddRange(SelectedCountry.Records.Select(p => new TimeTuple<int>(new Moment(p.Date), p.Deaths)));
+        recoveredDataSet.AddRange(SelectedCountry.Records.Select(p => new TimeTuple<int>(new Moment(p.Date), p.Recovered)));
+        currentDataSet.AddRange(SelectedCountry.Records.Select(p => new TimeTuple<int>(new Moment(p.Date), p.Current)));
+    }
+
+    private LineDataset<TimeTuple<int>> CreateDataSet(Color colour, string name) {
+        return new LineDataset<TimeTuple<int>> {
+            BorderColor = ColorUtil.FromDrawingColor(colour),
+            Label = name,
+            Fill = false,
+            BorderWidth = 3,
+            PointRadius = 3,
+            PointBorderWidth = 1,
+            SteppedLine = SteppedLine.False,
+        };
+    }
+}

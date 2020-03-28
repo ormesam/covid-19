@@ -1,7 +1,7 @@
 ﻿@page "/"
 @inject HttpClient Http
 
-<h1>Countries</h1>
+<h1>Cases in Numbers</h1>
 
 @if (Countries == null) {
     <p><em>Loading...</em></p>
@@ -17,7 +17,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var country in Countries) {
+            @foreach (var country in Countries.OrderBy(i => i.Name)) {
                 <tr>
                     <td>@country.Name</td>
                     <td>@country.CurrentConfirmed</td>
