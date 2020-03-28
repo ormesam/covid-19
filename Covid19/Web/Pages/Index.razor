@@ -4,26 +4,41 @@
 <h1>Cases in Numbers</h1>
 
 @if (Countries == null) {
-    <p><em>Loading...</em></p>
+    <Loading />
 } else {
     <table class="table">
         <thead>
             <tr>
                 <th>Country</th>
-                <th>Confirmed</th>
-                <th>Recovered</th>
-                <th>Deaths</th>
-                <th>Current<br />(Confirmed - Recovered - Deaths)</th>
+                <th class="d-none d-sm-table-cell">Confirmed</th>
+                <th class="d-none d-sm-table-cell">Recovered</th>
+                <th class="d-none d-sm-table-cell">Deaths</th>
+                <th class="d-none d-sm-table-cell">
+                    Current
+                    (<span class="confirmed">C</span> -
+                    <span class="recovered">R</span> -
+                    <span class="deaths">D</span>)
+                </th>
+                <th class="d-table-cell d-sm-none">
+                    <span class="confirmed">Confirmed</span> /
+                    <span class="recovered">Recovered</span> /
+                    <span class="deaths">Deaths</span>
+                </th>
             </tr>
         </thead>
         <tbody>
             @foreach (var country in Countries.OrderBy(i => i.Name)) {
                 <tr>
                     <td><a href="/charts/@country.Name">@country.Name</a></td>
-                    <td>@country.CurrentConfirmed</td>
-                    <td>@country.CurrentRecovered</td>
-                    <td>@country.CurrentDeaths</td>
-                    <td>@country.Current</td>
+                    <td class="confirmed d-none d-sm-table-cell">@country.CurrentConfirmed</td>
+                    <td class="recovered d-none d-sm-table-cell">@country.CurrentRecovered</td>
+                    <td class="deaths d-none d-sm-table-cell">@country.CurrentDeaths</td>
+                    <td class="current d-none d-sm-table-cell">@country.Current</td>
+                    <td class="d-table-cell d-sm-none">
+                        <span class="confirmed">@country.CurrentConfirmed</span> /
+                        <span class="recovered">@country.CurrentRecovered</span> /
+                        <span class="deaths">@country.CurrentDeaths</span>
+                    </td>
                 </tr>
             }
         </tbody>

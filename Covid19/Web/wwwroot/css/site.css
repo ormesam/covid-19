@@ -136,6 +136,22 @@ app {
         top: 0.5rem;
     }
 
+.confirmed {
+    color: orange;
+}
+
+.recovered {
+    color: green;
+}
+
+.deaths {
+    color: red;
+}
+
+.current {
+    color: blue;
+}
+
 @media (max-width: 767.98px) {
     .main .top-row:not(.auth) {
         display: none;

@@ -14,7 +14,7 @@
 <h1>@(Country?.Name ?? CountryName)</h1>
 
 @if (Countries == null) {
-    <p><em>Loading...</em></p>
+    <Loading />
 } else if (Country == null) {
     <p><em>No data for @CountryName</em></p>
 } else {
@@ -41,7 +41,7 @@
         CreateDataSet(Color.Orange, "Confirmed", Country.Records.Select(i => (i.Date, i.Confirmed)));
         CreateDataSet(Color.Red, "Deaths", Country.Records.Select(i => (i.Date, i.Deaths)));
         CreateDataSet(Color.Green, "Recovered", Country.Records.Select(i => (i.Date, i.Recovered)));
-        CreateDataSet(Color.Yellow, "Current", Country.Records.Select(i => (i.Date, i.Current)));
+        CreateDataSet(Color.Blue, "Current", Country.Records.Select(i => (i.Date, i.Current)));
     }
 
     private void ConfigureChart() {
@@ -52,7 +52,7 @@
                     Display = true,
                 },
                 Legend = new Legend {
-                    Position = Position.Bottom,
+                    Position = Position.Top,
                     Labels = new LegendLabelConfiguration {
                         UsePointStyle = true,
                     }
