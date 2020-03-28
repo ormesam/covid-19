@@ -62,7 +62,7 @@
                     Display = true,
                 },
                 Legend = new Legend {
-                    Position = Position.Right,
+                    Position = Position.Bottom,
                     Labels = new LegendLabelConfiguration {
                         UsePointStyle = true,
                     }
@@ -87,10 +87,6 @@
                                 Round = TimeMeasurement.Day,
                                 TooltipFormat = "DD/MM/YYYY",
                             },
-                            ScaleLabel = new ScaleLabel
-                            {
-                                LabelString = "Date",
-                            }
                         }
                     }
                 },
@@ -105,7 +101,7 @@
         lineConfig.Data.Datasets.Add(deathsDataSet);
         lineConfig.Data.Datasets.Add(recoveredDataSet);
         lineConfig.Data.Datasets.Add(currentDataSet);
-        
+
         Countries = await DataUtility.GetData(Http);
     }
 
@@ -114,15 +110,22 @@
             return;
         }
 
+        System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+        stopwatch.Start();
+
         confirmedDataSet.RemoveAll(i => true);
         deathsDataSet.RemoveAll(i => true);
         recoveredDataSet.RemoveAll(i => true);
         currentDataSet.RemoveAll(i => true);
 
+        Console.WriteLine("Removing datasets: " + stopwatch.Elapsed);
+
         confirmedDataSet.AddRange(SelectedCountry.Records.Select(p => new TimeTuple<int>(new Moment(p.Date), p.Confirmed)));
         deathsDataSet.AddRange(SelectedCountry.Records.Select(p => new TimeTuple<int>(new Moment(p.Date), p.Deaths)));
         recoveredDataSet.AddRange(SelectedCountry.Records.Select(p => new TimeTuple<int>(new Moment(p.Date), p.Recovered)));
         currentDataSet.AddRange(SelectedCountry.Records.Select(p => new TimeTuple<int>(new Moment(p.Date), p.Current)));
+
+        Console.WriteLine("Adding datasets: " + stopwatch.Elapsed);
     }
 
     private LineDataset<TimeTuple<int>> CreateDataSet(Color colour, string name) {
