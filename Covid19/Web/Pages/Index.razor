@@ -1,0 +1,58 @@
+﻿@page "/"
+@inject HttpClient Http
+
+<h1>Countries</h1>
+
+@if (Countries == null) {
+    <p><em>Loading...</em></p>
+} else {
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Country</th>
+                <th>Confirmed</th>
+                <th>Recovered</th>
+                <th>Deaths</th>
+                <th>Current (Confirmed - Recovered - Deaths)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var country in Countries) {
+                <tr>
+                    <td>@country.Name</td>
+                    <td>@country.CurrentConfirmed</td>
+                    <td>@country.CurrentRecovered</td>
+                    <td>@country.CurrentDeaths</td>
+                    <td>@country.Current</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    IEnumerable<Country> Countries;
+
+    protected override async Task OnInitializedAsync() {
+        var jsonData = await Http.GetJsonAsync<IDictionary<string, JsonData[]>>("https://pomber.github.io/covid19/timeseries.json");
+
+        Countries = ParseRecords(jsonData);
+    }
+
+    private IEnumerable<Country> ParseRecords(IDictionary<string, JsonData[]> jsonData) {
+        foreach (var item in jsonData) {
+            yield return new Country {
+                Name = item.Key,
+                Records = item.Value
+                    .Select(i => new Record {
+                        Date = DateTime.Parse(i.Date),
+                        Confirmed = i.Confirmed,
+                        Deaths = i.Deaths,
+                        Recovered = i.Recovered,
+                    })
+                    .OrderBy(i => i.Date)
+                    .ToList(),
+            };
+        }
+    }
+}
