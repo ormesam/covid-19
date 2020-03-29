@@ -111,25 +111,6 @@ namespace DataImport {
             }
         }
 
-        private static IEnumerable<CountryDto> GetCurrentData() {
-            using (ModelDataContext context = new ModelDataContext()) {
-                return context.Country
-                    .Select(row => new CountryDto {
-                        CountryId = row.CountryId,
-                        Name = row.Name,
-                        Records = row.Record
-                            .Select(i => new RecordDto {
-                                Date = i.Date,
-                                Confirmed = i.Confirmed,
-                                Deaths = i.Deaths,
-                                Recovered = i.Recovered,
-                            })
-                            .ToList(),
-                    })
-                    .ToList();
-            }
-        }
-
         private static async Task<IEnumerable<CountryDto>> GetNewData() {
             using (HttpClient client = new HttpClient()) {
                 string jsonData = await client.GetStringAsync("https://pomber.github.io/covid19/timeseries.json");
