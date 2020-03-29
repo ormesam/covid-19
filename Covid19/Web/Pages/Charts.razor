@@ -13,7 +13,7 @@
 
 <h1>@(Country?.Name ?? CountryName)</h1>
 
-@if (Countries == null) {
+@if (!loaded) {
     <Loading />
 } else if (Country == null) {
     <p><em>No data for @CountryName</em></p>
@@ -25,13 +25,18 @@
     [Parameter]
     public string CountryName { get; set; }
 
-    IEnumerable<Country> Countries;
-    Country Country => Countries?.SingleOrDefault(i => i.Name == CountryName);
+    bool loaded = false;
+    CountryDto Country;
     LineConfig lineConfig;
     ChartJsLineChart lineChartJs;
 
     protected override async Task OnInitializedAsync() {
-        Countries = await DataUtility.GetData(Http);
+        try {
+            Country = await Http.GetJsonAsync<CountryDto>("http://localhost:62702/countries/" + CountryName);
+        } catch (Exception) {
+        }
+
+        loaded = true;
 
         if (Country == null) {
             return;
@@ -84,7 +89,8 @@
         };
     }
 
-    private void CreateDataSet(Color colour, string name, IEnumerable<(DateTime Date, int Value)> data) {
+    private void CreateDataSet(Color colour, string name, IEnumerable<(DateTime Date, int Value)>
+        data) {
         var dataSet = new LineDataset<TimeTuple<int>> {
             BorderColor = ColorUtil.FromDrawingColor(colour),
             Label = name,

@@ -27,17 +27,17 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var country in Countries.OrderBy(i => i.Name)) {
+            @foreach (var country in Countries) {
                 <tr>
                     <td><a href="/charts/@country.Name">@country.Name</a></td>
-                    <td class="confirmed d-none d-sm-table-cell">@country.CurrentConfirmed</td>
-                    <td class="recovered d-none d-sm-table-cell">@country.CurrentRecovered</td>
-                    <td class="deaths d-none d-sm-table-cell">@country.CurrentDeaths</td>
+                    <td class="confirmed d-none d-sm-table-cell">@country.Confirmed</td>
+                    <td class="recovered d-none d-sm-table-cell">@country.Recovered</td>
+                    <td class="deaths d-none d-sm-table-cell">@country.Deaths</td>
                     <td class="current d-none d-sm-table-cell">@country.Current</td>
                     <td class="d-table-cell d-sm-none">
-                        <span class="confirmed">@country.CurrentConfirmed</span> /
-                        <span class="recovered">@country.CurrentRecovered</span> /
-                        <span class="deaths">@country.CurrentDeaths</span>
+                        <span class="confirmed">@country.Confirmed</span> /
+                        <span class="recovered">@country.Recovered</span> /
+                        <span class="deaths">@country.Deaths</span>
                     </td>
                 </tr>
             }
@@ -46,9 +46,9 @@
 }
 
 @code {
-    IEnumerable<Country> Countries;
+    IEnumerable<CountryOverviewDto> Countries;
 
     protected override async Task OnInitializedAsync() {
-        Countries = await DataUtility.GetData(Http);
+        Countries = await Http.GetJsonAsync<IEnumerable<CountryOverviewDto>>("http://localhost:62702/countries");
     }
 }
