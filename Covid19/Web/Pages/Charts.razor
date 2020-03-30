@@ -11,13 +11,23 @@
 @using ChartJs.Blazor.Util
 @using System.Drawing;
 
-<h1>@(Country?.Name ?? CountryName)</h1>
+<h3>@(Country?.Name ?? CountryName)</h3>
 
 @if (!loaded) {
     <Loading />
 } else if (Country == null) {
     <p><em>No data for @CountryName</em></p>
 } else {
+    <p>
+        <strong>
+            @Country.Name:
+            <span class="confirmed">@Country.LastRecord?.Confirmed Confirmed</span> /
+            <span class="recovered">@Country.LastRecord?.Recovered Recovered</span> /
+            <span class="deaths">@Country.LastRecord?.Deaths Deaths</span> /
+            <span class="current">@Country.LastRecord?.Current Current</span>
+        </strong>
+    </p>
+
     <ChartJsLineChart @ref="lineChartJs" Config="@lineConfig" Width="600" Height="300" />
 }
 

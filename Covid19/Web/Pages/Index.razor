@@ -1,11 +1,21 @@
 ﻿@page "/"
 @inject HttpClient Http
 
-<h1>Cases in Numbers</h1>
+<h3>Cases in Numbers</h3>
 
 @if (Countries == null) {
     <Loading />
 } else {
+    <p>
+        <strong>
+            World:
+            <span class="confirmed">@Countries.Sum(i => i.Confirmed) Confirmed</span> /
+            <span class="recovered">@Countries.Sum(i => i.Recovered) Recovered</span> /
+            <span class="deaths">@Countries.Sum(i => i.Deaths) Deaths</span> /
+            <span class="current">@Countries.Sum(i => i.Current) Current</span>
+        </strong>
+    </p>
+
     <table class="table">
         <thead>
             <tr>
