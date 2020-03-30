@@ -11,6 +11,7 @@ namespace DataImport {
     class Program {
         private static int newCountryCount = 0;
         private static int newRecordCount = 0;
+        private static int updatedRecordCount = 0;
 
         static void Main(string[] args) {
             Console.WriteLine("Starting sync...");
@@ -23,7 +24,11 @@ namespace DataImport {
             CreateNewRecords(newData);
             UpdateCurrentTotals();
 
-            Console.WriteLine($"Sync complete - {newCountryCount} new countries added - {newRecordCount} new records added");
+            Console.WriteLine($"Sync complete - {newCountryCount} countries added - {newRecordCount} records added - {updatedRecordCount} records updated");
+
+#if !DEBUG
+            Console.ReadLine();
+#endif
         }
 
         private static void UpdateCurrentTotals() {
@@ -57,31 +62,48 @@ namespace DataImport {
                     .ToList();
 
                 foreach (var country in countrys) {
-                    var currentRecordDates = context.Record
+                    var currentRecords = context.Record
                         .Where(row => row.CountryId == country.CountryId)
-                        .Select(row => row.Date)
                         .ToList();
 
-                    var newRecords = newData
+                    var importRecords = newData
                         .Where(row => row.Name == country.Name)
                         .SelectMany(row => row.Records)
-                        .Where(row => !currentRecordDates.Contains(row.Date))
                         .ToList();
 
-                    foreach (var record in newRecords) {
-                        Console.WriteLine($"Creating record for {country.Name} - {record.Date.ToShortDateString()}");
+                    foreach (var record in importRecords) {
+                        var currentRecord = currentRecords
+                            .Where(row => row.Date == record.Date)
+                            .SingleOrDefault();
 
-                        context.Record.Add(new Record {
-                            Confirmed = record.Confirmed,
-                            CountryId = country.CountryId,
-                            Date = record.Date,
-                            Deaths = record.Deaths,
-                            Recovered = record.Recovered,
-                        });
+                        if (currentRecord == null) {
+                            Console.WriteLine($"Creating record for {country.Name} - {record.Date.ToShortDateString()}");
 
-                        context.SaveChanges();
+                            context.Record.Add(new Record {
+                                Confirmed = record.Confirmed,
+                                CountryId = country.CountryId,
+                                Date = record.Date,
+                                Deaths = record.Deaths,
+                                Recovered = record.Recovered,
+                            });
 
-                        newRecordCount++;
+                            context.SaveChanges();
+
+                            newRecordCount++;
+                        } else if (record.Confirmed != currentRecord.Confirmed ||
+                                record.Recovered != currentRecord.Recovered ||
+                                record.Deaths != currentRecord.Deaths) {
+
+                            Console.WriteLine($"Updating record for {country.Name} - {record.Date.ToShortDateString()}");
+
+                            currentRecord.Confirmed = record.Confirmed;
+                            currentRecord.Recovered = record.Recovered;
+                            currentRecord.Deaths = record.Deaths;
+
+                            context.SaveChanges();
+
+                            updatedRecordCount++;
+                        }
                     }
                 }
             }
