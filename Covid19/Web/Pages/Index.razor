@@ -59,6 +59,6 @@
     IEnumerable<CountryOverviewDto> Countries;
 
     protected override async Task OnInitializedAsync() {
-        Countries = await Http.GetJsonAsync<IEnumerable<CountryOverviewDto>>("http://localhost:62702/countries");
+        Countries = await Http.GetJsonAsync<IEnumerable<CountryOverviewDto>>(Constants.ApiUrl + "/countries");
     }
 }

@@ -42,7 +42,7 @@
 
     protected override async Task OnInitializedAsync() {
         try {
-            Country = await Http.GetJsonAsync<CountryDto>("http://localhost:62702/countries/" + CountryName);
+            Country = await Http.GetJsonAsync<CountryDto>(Constants.ApiUrl + "/countries/" + CountryName);
         } catch (Exception) {
         }
 
