@@ -152,6 +152,10 @@ app {
     color: blue;
 }
 
+.search-box {
+    max-width: 350px;
+}
+
 @media (max-width: 767.98px) {
     .main .top-row:not(.auth) {
         display: none;
