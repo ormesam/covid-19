@@ -13,9 +13,14 @@ namespace Api.Controllers {
     [ApiController]
     [Route("[controller]")]
     public class SyncController : ControllerBase {
+        private readonly ModelDataContext context;
         private int newCountryCount = 0;
         private int newRecordCount = 0;
         private int updatedRecordCount = 0;
+
+        public SyncController(ModelDataContext context) {
+            this.context = context;
+        }
 
         [HttpGet]
         public async Task<IActionResult> Get() {
@@ -37,104 +42,98 @@ namespace Api.Controllers {
         }
 
         private async Task UpdateCurrentTotals() {
-            using (ModelDataContext context = new ModelDataContext()) {
-                var countries = context.Country.ToList();
+            var countries = context.Country.ToList();
 
-                foreach (var country in countries) {
-                    var lastRecord = context.Record
-                        .Where(row => row.CountryId == country.CountryId)
-                        .OrderByDescending(row => row.Date)
-                        .FirstOrDefault();
+            foreach (var country in countries) {
+                var lastRecord = context.Record
+                    .Where(row => row.CountryId == country.CountryId)
+                    .OrderByDescending(row => row.Date)
+                    .FirstOrDefault();
 
-                    country.CurrentConfirmed = lastRecord?.Confirmed ?? 0;
-                    country.CurrentDeaths = lastRecord?.Deaths ?? 0;
-                    country.CurrentRecovered = lastRecord?.Recovered ?? 0;
+                country.CurrentConfirmed = lastRecord?.Confirmed ?? 0;
+                country.CurrentDeaths = lastRecord?.Deaths ?? 0;
+                country.CurrentRecovered = lastRecord?.Recovered ?? 0;
 
-                    context.SaveChanges();
-                }
+                context.SaveChanges();
             }
 
             await WriteLine("Current totals updated");
         }
 
         private async Task CreateNewRecords(IEnumerable<CountryDto> newData) {
-            using (ModelDataContext context = new ModelDataContext()) {
-                var countrys = context.Country
-                    .Select(row => new {
-                        row.CountryId,
-                        row.Name,
-                    })
+            var countrys = context.Country
+                .Select(row => new {
+                    row.CountryId,
+                    row.Name,
+                })
+                .ToList();
+
+            foreach (var country in countrys) {
+                var currentRecords = context.Record
+                    .Where(row => row.CountryId == country.CountryId)
                     .ToList();
 
-                foreach (var country in countrys) {
-                    var currentRecords = context.Record
-                        .Where(row => row.CountryId == country.CountryId)
-                        .ToList();
+                var importRecords = newData
+                    .Where(row => row.Name == country.Name)
+                    .SelectMany(row => row.Records)
+                    .ToList();
 
-                    var importRecords = newData
-                        .Where(row => row.Name == country.Name)
-                        .SelectMany(row => row.Records)
-                        .ToList();
+                foreach (var record in importRecords) {
+                    var currentRecord = currentRecords
+                        .Where(row => row.Date == record.Date)
+                        .SingleOrDefault();
 
-                    foreach (var record in importRecords) {
-                        var currentRecord = currentRecords
-                            .Where(row => row.Date == record.Date)
-                            .SingleOrDefault();
+                    if (currentRecord == null) {
+                        await WriteLine($"Creating record for {country.Name} - {record.Date.ToShortDateString()}");
 
-                        if (currentRecord == null) {
-                            await WriteLine($"Creating record for {country.Name} - {record.Date.ToShortDateString()}");
+                        context.Record.Add(new Record {
+                            Confirmed = record.Confirmed,
+                            CountryId = country.CountryId,
+                            Date = record.Date,
+                            Deaths = record.Deaths,
+                            Recovered = record.Recovered,
+                        });
 
-                            context.Record.Add(new Record {
-                                Confirmed = record.Confirmed,
-                                CountryId = country.CountryId,
-                                Date = record.Date,
-                                Deaths = record.Deaths,
-                                Recovered = record.Recovered,
-                            });
+                        context.SaveChanges();
 
-                            context.SaveChanges();
+                        newRecordCount++;
+                    } else if (record.Confirmed != currentRecord.Confirmed ||
+                            record.Recovered != currentRecord.Recovered ||
+                            record.Deaths != currentRecord.Deaths) {
 
-                            newRecordCount++;
-                        } else if (record.Confirmed != currentRecord.Confirmed ||
-                                record.Recovered != currentRecord.Recovered ||
-                                record.Deaths != currentRecord.Deaths) {
+                        await WriteLine($"Updating record for {country.Name} - {record.Date.ToShortDateString()}");
 
-                            await WriteLine($"Updating record for {country.Name} - {record.Date.ToShortDateString()}");
+                        currentRecord.Confirmed = record.Confirmed;
+                        currentRecord.Recovered = record.Recovered;
+                        currentRecord.Deaths = record.Deaths;
 
-                            currentRecord.Confirmed = record.Confirmed;
-                            currentRecord.Recovered = record.Recovered;
-                            currentRecord.Deaths = record.Deaths;
+                        context.SaveChanges();
 
-                            context.SaveChanges();
-
-                            updatedRecordCount++;
-                        }
+                        updatedRecordCount++;
                     }
                 }
             }
         }
 
         private async Task CreateNewCountries(IEnumerable<CountryDto> newData) {
-            using (ModelDataContext context = new ModelDataContext()) {
-                var countryNames = context.Country
-                    .Select(row => row.Name)
-                    .ToList();
+            var countryNames = context.Country
+                .Select(row => row.Name)
+                .ToList();
 
-                var newCountries = newData
-                    .Where(row => !countryNames.Contains(row.Name))
-                    .ToList();
+            var newCountries = newData
+                .Where(row => !countryNames.Contains(row.Name))
+                .ToList();
 
-                foreach (var country in newCountries) {
-                    await WriteLine($"Creating {country.Name}");
+            foreach (var country in newCountries) {
+                await WriteLine($"Creating {country.Name}");
 
-                    context.Country.Add(new Country {
-                        Name = country.Name,
-                    });
+                context.Country.Add(new Country {
+                    Name = country.Name,
+                });
 
-                    context.SaveChanges();
+                context.SaveChanges();
 
-                    newCountryCount++;
-                }
+                newCountryCount++;
             }
         }
 
