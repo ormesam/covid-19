@@ -10,10 +10,10 @@
         <p>
             <strong>
                 World:
-                <span class="confirmed">@Countries.Sum(i => i.Confirmed) Confirmed</span> /
-                <span class="recovered">@Countries.Sum(i => i.Recovered) Recovered</span> /
-                <span class="deaths">@Countries.Sum(i => i.Deaths) Deaths</span> /
-                <span class="current">@Countries.Sum(i => i.Current) Current</span>
+                <span class="confirmed">@Countries.Sum(i => i.Confirmed).ToString("n0") Confirmed</span> /
+                <span class="recovered">@Countries.Sum(i => i.Recovered).ToString("n0") Recovered</span> /
+                <span class="deaths">@Countries.Sum(i => i.Deaths).ToString("n0") Deaths</span> /
+                <span class="current">@Countries.Sum(i => i.Current).ToString("n0") Current</span>
             </strong>
         </p>
     </div>
@@ -48,14 +48,14 @@
             @foreach (var country in FilteredCountries) {
                 <tr>
                     <td><a href="/charts/@country.Name">@country.Name</a></td>
-                    <td class="confirmed d-none d-sm-table-cell">@country.Confirmed</td>
-                    <td class="recovered d-none d-sm-table-cell">@country.Recovered</td>
-                    <td class="deaths d-none d-sm-table-cell">@country.Deaths</td>
-                    <td class="current d-none d-sm-table-cell">@country.Current</td>
+                    <td class="confirmed d-none d-sm-table-cell">@country.Confirmed.ToString("n0")</td>
+                    <td class="recovered d-none d-sm-table-cell">@country.Recovered.ToString("n0")</td>
+                    <td class="deaths d-none d-sm-table-cell">@country.Deaths.ToString("n0")</td>
+                    <td class="current d-none d-sm-table-cell">@country.Current.ToString("n0")</td>
                     <td class="d-table-cell d-sm-none">
-                        <span class="confirmed">@country.Confirmed</span> /
-                        <span class="recovered">@country.Recovered</span> /
-                        <span class="deaths">@country.Deaths</span>
+                        <span class="confirmed">@country.Confirmed.ToString("n0")</span> /
+                        <span class="recovered">@country.Recovered.ToString("n0")</span> /
+                        <span class="deaths">@country.Deaths.ToString("n0")</span>
                     </td>
                 </tr>
             }

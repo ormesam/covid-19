@@ -21,10 +21,10 @@
     <p>
         <strong>
             @Country.Name:
-            <span class="confirmed">@Country.LastRecord?.Confirmed Confirmed</span> /
-            <span class="recovered">@Country.LastRecord?.Recovered Recovered</span> /
-            <span class="deaths">@Country.LastRecord?.Deaths Deaths</span> /
-            <span class="current">@Country.LastRecord?.Current Current</span>
+            <span class="confirmed">@Country.LastRecord?.Confirmed.ToString("n0") Confirmed</span> /
+            <span class="recovered">@Country.LastRecord?.Recovered.ToString("n0") Recovered</span> /
+            <span class="deaths">@Country.LastRecord?.Deaths.ToString("n0") Deaths</span> /
+            <span class="current">@Country.LastRecord?.Current.ToString("n0") Current</span>
         </strong>
     </p>
 
