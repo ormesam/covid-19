@@ -1,4 +1,4 @@
-﻿namespace DataImport {
+﻿namespace Api {
     public class JsonData {
         public string Date { get; set; }
         public int Confirmed { get; set; }

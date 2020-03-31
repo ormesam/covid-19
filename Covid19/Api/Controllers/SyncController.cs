@@ -2,36 +2,41 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Common;
 using DataAccess.Models;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
-namespace DataImport {
-    class Program {
-        private static int newCountryCount = 0;
-        private static int newRecordCount = 0;
-        private static int updatedRecordCount = 0;
+namespace Api.Controllers {
+    [ApiController]
+    [Route("[controller]")]
+    public class SyncController : ControllerBase {
+        private int newCountryCount = 0;
+        private int newRecordCount = 0;
+        private int updatedRecordCount = 0;
 
-        static void Main(string[] args) {
-            Console.WriteLine("Starting sync...");
+        [HttpGet]
+        public async Task<IActionResult> Get() {
+            await WriteLine("Starting sync...");
 
-            var newData = GetNewData().Result;
+            var newData = await GetNewData();
 
-            Console.WriteLine($"{newData.Count()} countries found");
+            await WriteLine($"{newData.Count()} countries found");
 
-            CreateNewCountries(newData);
-            CreateNewRecords(newData);
-            UpdateCurrentTotals();
+            await CreateNewCountries(newData);
+            await CreateNewRecords(newData);
+            await UpdateCurrentTotals();
 
-            Console.WriteLine($"Sync complete - {newCountryCount} countries added - {newRecordCount} records added - {updatedRecordCount} records updated");
+            string syncMessage = $"Sync complete - {newCountryCount} countries added - {newRecordCount} records added - {updatedRecordCount} records updated";
 
-#if !DEBUG
-            Console.ReadLine();
-#endif
+            await WriteLine(syncMessage);
+
+            return Ok(syncMessage);
         }
 
-        private static void UpdateCurrentTotals() {
+        private async Task UpdateCurrentTotals() {
             using (ModelDataContext context = new ModelDataContext()) {
                 var countries = context.Country.ToList();
 
@@ -49,10 +54,10 @@ namespace DataImport {
                 }
             }
 
-            Console.WriteLine("Current totals updated");
+            await WriteLine("Current totals updated");
         }
 
-        private static void CreateNewRecords(IEnumerable<CountryDto> newData) {
+        private async Task CreateNewRecords(IEnumerable<CountryDto> newData) {
             using (ModelDataContext context = new ModelDataContext()) {
                 var countrys = context.Country
                     .Select(row => new {
@@ -77,7 +82,7 @@ namespace DataImport {
                             .SingleOrDefault();
 
                         if (currentRecord == null) {
-                            Console.WriteLine($"Creating record for {country.Name} - {record.Date.ToShortDateString()}");
+                            await WriteLine($"Creating record for {country.Name} - {record.Date.ToShortDateString()}");
 
                             context.Record.Add(new Record {
                                 Confirmed = record.Confirmed,
@@ -94,7 +99,7 @@ namespace DataImport {
                                 record.Recovered != currentRecord.Recovered ||
                                 record.Deaths != currentRecord.Deaths) {
 
-                            Console.WriteLine($"Updating record for {country.Name} - {record.Date.ToShortDateString()}");
+                            await WriteLine($"Updating record for {country.Name} - {record.Date.ToShortDateString()}");
 
                             currentRecord.Confirmed = record.Confirmed;
                             currentRecord.Recovered = record.Recovered;
@@ -109,7 +114,7 @@ namespace DataImport {
             }
         }
 
-        private static void CreateNewCountries(IEnumerable<CountryDto> newData) {
+        private async Task CreateNewCountries(IEnumerable<CountryDto> newData) {
             using (ModelDataContext context = new ModelDataContext()) {
                 var countryNames = context.Country
                     .Select(row => row.Name)
@@ -120,7 +125,7 @@ namespace DataImport {
                     .ToList();
 
                 foreach (var country in newCountries) {
-                    Console.WriteLine($"Creating {country.Name}");
+                    await WriteLine($"Creating {country.Name}");
 
                     context.Country.Add(new Country {
                         Name = country.Name,
@@ -133,7 +138,7 @@ namespace DataImport {
             }
         }
 
-        private static async Task<IEnumerable<CountryDto>> GetNewData() {
+        private async Task<IEnumerable<CountryDto>> GetNewData() {
             using (HttpClient client = new HttpClient()) {
                 string jsonData = await client.GetStringAsync("https://pomber.github.io/covid19/timeseries.json");
 
@@ -143,7 +148,7 @@ namespace DataImport {
             }
         }
 
-        private static IEnumerable<CountryDto> ParseRecords(IDictionary<string, JsonData[]> jsonData) {
+        private IEnumerable<CountryDto> ParseRecords(IDictionary<string, JsonData[]> jsonData) {
             foreach (var item in jsonData) {
                 yield return new CountryDto {
                     Name = item.Key,
@@ -159,6 +164,12 @@ namespace DataImport {
                         .ToList(),
                 };
             }
+        }
+
+        private async Task WriteLine(string message) {
+            message += Environment.NewLine;
+
+            await Response.Body.WriteAsync(Encoding.ASCII.GetBytes(message), 0, message.Length);
         }
     }
 }
