@@ -45,11 +45,15 @@ namespace Api.Controllers {
 
             country.Records = context.Record
                 .Where(row => row.CountryId == country.CountryId)
+                .OrderBy(row => row.Date)
                 .Select(row => new RecordDto {
-                    Confirmed = row.Confirmed,
                     Date = row.Date,
-                    Deaths = row.Deaths,
-                    Recovered = row.Recovered,
+                    AccumulatedConfirmed = row.AccumulatedConfirmed,
+                    AccumulatedDeaths = row.AccumulatedDeaths,
+                    AccumulatedRecovered = row.AccumulatedRecovered,
+                    NewConfirmed = row.NewConfirmed,
+                    NewDeaths = row.NewDeaths,
+                    NewRecovered = row.NewRecovered,
                 })
                 .ToList();
 

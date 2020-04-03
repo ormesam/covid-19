@@ -50,9 +50,9 @@ namespace Api.Controllers {
                     .OrderByDescending(row => row.Date)
                     .FirstOrDefault();
 
-                country.CurrentConfirmed = lastRecord?.Confirmed ?? 0;
-                country.CurrentDeaths = lastRecord?.Deaths ?? 0;
-                country.CurrentRecovered = lastRecord?.Recovered ?? 0;
+                country.CurrentConfirmed = lastRecord?.AccumulatedConfirmed ?? 0;
+                country.CurrentDeaths = lastRecord?.AccumulatedDeaths ?? 0;
+                country.CurrentRecovered = lastRecord?.AccumulatedRecovered ?? 0;
 
                 context.SaveChanges();
             }
@@ -71,11 +71,13 @@ namespace Api.Controllers {
             foreach (var country in countrys) {
                 var currentRecords = context.Record
                     .Where(row => row.CountryId == country.CountryId)
+                    .OrderBy(row => row.Date)
                     .ToList();
 
                 var importRecords = newData
                     .Where(row => row.Name == country.Name)
                     .SelectMany(row => row.Records)
+                    .OrderBy(row => row.Date)
                     .ToList();
 
                 foreach (var record in importRecords) {
@@ -83,29 +85,46 @@ namespace Api.Controllers {
                         .Where(row => row.Date == record.Date)
                         .SingleOrDefault();
 
+                    var previousRecord = currentRecords
+                        .Where(row => row.Date == record.Date.AddDays(-1))
+                        .SingleOrDefault();
+
+                    var newConfirmed = record.AccumulatedConfirmed - (previousRecord?.AccumulatedConfirmed ?? 0);
+                    var newRecovered = record.AccumulatedRecovered - (previousRecord?.AccumulatedRecovered ?? 0);
+                    var newDeaths = record.AccumulatedDeaths - (previousRecord?.AccumulatedDeaths ?? 0);
+
                     if (currentRecord == null) {
                         await WriteLine($"Creating record for {country.Name} - {record.Date.ToShortDateString()}");
 
                         context.Record.Add(new Record {
-                            Confirmed = record.Confirmed,
+                            AccumulatedConfirmed = record.AccumulatedConfirmed,
                             CountryId = country.CountryId,
                             Date = record.Date,
-                            Deaths = record.Deaths,
-                            Recovered = record.Recovered,
+                            AccumulatedDeaths = record.AccumulatedDeaths,
+                            AccumulatedRecovered = record.AccumulatedRecovered,
+                            NewConfirmed = newConfirmed,
+                            NewRecovered = newRecovered,
+                            NewDeaths = newDeaths,
                         });
 
                         context.SaveChanges();
 
                         newRecordCount++;
-                    } else if (record.Confirmed != currentRecord.Confirmed ||
-                            record.Recovered != currentRecord.Recovered ||
-                            record.Deaths != currentRecord.Deaths) {
+                    } else if (record.AccumulatedConfirmed != currentRecord.AccumulatedConfirmed ||
+                        record.AccumulatedRecovered != currentRecord.AccumulatedRecovered ||
+                        record.AccumulatedDeaths != currentRecord.AccumulatedDeaths ||
+                        newConfirmed != currentRecord.NewConfirmed ||
+                        newRecovered != currentRecord.NewRecovered ||
+                        newDeaths != currentRecord.NewDeaths) {
 
                         await WriteLine($"Updating record for {country.Name} - {record.Date.ToShortDateString()}");
 
-                        currentRecord.Confirmed = record.Confirmed;
-                        currentRecord.Recovered = record.Recovered;
-                        currentRecord.Deaths = record.Deaths;
+                        currentRecord.AccumulatedConfirmed = record.AccumulatedConfirmed;
+                        currentRecord.AccumulatedRecovered = record.AccumulatedRecovered;
+                        currentRecord.AccumulatedDeaths = record.AccumulatedDeaths;
+                        currentRecord.NewConfirmed = newConfirmed;
+                        currentRecord.NewRecovered = newRecovered;
+                        currentRecord.NewDeaths = newDeaths;
 
                         context.SaveChanges();
 
@@ -155,9 +174,9 @@ namespace Api.Controllers {
                         .Where(i => i.Confirmed > 0)
                         .Select(i => new RecordDto {
                             Date = DateTime.Parse(i.Date),
-                            Confirmed = i.Confirmed,
-                            Deaths = i.Deaths,
-                            Recovered = i.Recovered,
+                            AccumulatedConfirmed = i.Confirmed,
+                            AccumulatedDeaths = i.Deaths,
+                            AccumulatedRecovered = i.Recovered,
                         })
                         .OrderBy(i => i.Date)
                         .ToList(),

@@ -3,9 +3,12 @@
 namespace Common {
     public class RecordDto {
         public DateTime Date { get; set; }
-        public int Confirmed { get; set; }
-        public int Recovered { get; set; }
-        public int Deaths { get; set; }
-        public int Current => Confirmed - Recovered - Deaths;
+        public int AccumulatedConfirmed { get; set; }
+        public int AccumulatedRecovered { get; set; }
+        public int AccumulatedDeaths { get; set; }
+        public int NewConfirmed { get; set; }
+        public int NewRecovered { get; set; }
+        public int NewDeaths { get; set; }
+        public int CurrentlyActive => AccumulatedConfirmed - AccumulatedRecovered - AccumulatedDeaths;
     }
 }

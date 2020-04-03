@@ -3,7 +3,10 @@
 
     [CountryId] int NOT NULL CONSTRAINT [FK_Record_Country] REFERENCES [Country],
     [Date] datetime NOT NULL,
-    [Confirmed] int NOT NULL,
-    [Recovered] int NOT NULL,
-    [Deaths] int NOT NULL,
+    [AccumulatedConfirmed] int NOT NULL,
+    [AccumulatedRecovered] int NOT NULL,
+    [AccumulatedDeaths] int NOT NULL,
+    [NewConfirmed] int NOT NULL,
+    [NewRecovered] int NOT NULL,
+    [NewDeaths] int NOT NULL,
 )
