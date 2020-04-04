@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Api.Utility;
 using Common;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -46,15 +47,7 @@ namespace Api.Controllers {
             country.Records = context.Record
                 .Where(row => row.CountryId == country.CountryId)
                 .OrderBy(row => row.Date)
-                .Select(row => new RecordDto {
-                    Date = row.Date,
-                    AccumulatedConfirmed = row.AccumulatedConfirmed,
-                    AccumulatedDeaths = row.AccumulatedDeaths,
-                    AccumulatedRecovered = row.AccumulatedRecovered,
-                    NewConfirmed = row.NewConfirmed,
-                    NewDeaths = row.NewDeaths,
-                    NewRecovered = row.NewRecovered,
-                })
+                .Select(ExpressionsHelper.RecordRowToDto)
                 .ToList();
 
             return country;

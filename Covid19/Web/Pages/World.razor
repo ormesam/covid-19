@@ -1,0 +1,182 @@
+﻿@page "/World"
+@inject HttpClient Http
+@using ChartJs.Blazor.Charts
+@using ChartJs.Blazor.ChartJS.Common.Properties
+@using ChartJs.Blazor.ChartJS.Common.Enums
+@using ChartJs.Blazor.ChartJS.Common.Axes
+@using ChartJs.Blazor.ChartJS.Common.Axes.Ticks
+@using ChartJs.Blazor.ChartJS.Common.Handlers
+@using ChartJs.Blazor.ChartJS.Common.Time
+@using ChartJs.Blazor.ChartJS.LineChart
+@using ChartJs.Blazor.ChartJS.BarChart
+@using ChartJs.Blazor.ChartJS.BarChart.Axes
+@using ChartJs.Blazor.Util
+@using System.Drawing;
+
+<h3>World Stats</h3>
+
+@if (OverallStats == null) {
+    <Loading />
+} else {
+    <div class="row">
+        <div class="col">
+            <p>
+                <strong>
+                    <span class="confirmed">@OverallStats.LastRecord?.AccumulatedConfirmed.ToString("n0") Confirmed</span> /
+                    <span class="recovered">@OverallStats.LastRecord?.AccumulatedRecovered.ToString("n0") Recovered</span> /
+                    <span class="deaths">@OverallStats.LastRecord?.AccumulatedDeaths.ToString("n0") Deaths</span> /
+                    <span class="current">@OverallStats.LastRecord?.CurrentlyActive.ToString("n0") Current</span>
+                </strong>
+            </p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-lg-6">
+            <ChartJsLineChart @ref="accumulationLineChartJs" Config="@accumulationLineConfig" Width="600" Height="300" />
+        </div>
+        <div class="col-12 col-lg-6">
+            <ChartJsBarChart @ref="dailyBarChartJs" Config="@dailyBarConfig" Width="600" Height="300" />
+        </div>
+    </div>
+}
+
+@code {
+    WorldDto OverallStats;
+    LineConfig accumulationLineConfig;
+    ChartJsLineChart accumulationLineChartJs;
+    BarConfig dailyBarConfig;
+    ChartJsBarChart dailyBarChartJs;
+
+    protected override async Task OnInitializedAsync() {
+        try {
+            OverallStats = await Http.GetJsonAsync<WorldDto>(Constants.ApiUrl + "/world");
+        } catch (Exception) {
+        }
+
+        if (OverallStats == null) {
+            return;
+        }
+
+        CreateAccumulationChart();
+        CreateDailyChart();
+    }
+
+    private void CreateAccumulationChart() {
+        ConfigureAccumulationChart();
+        CreateDataSet(accumulationLineConfig, Color.Orange, "Confirmed", OverallStats.Records.Select(i => (i.Date, i.AccumulatedConfirmed)));
+        CreateDataSet(accumulationLineConfig, Color.Red, "Deaths", OverallStats.Records.Select(i => (i.Date, i.AccumulatedDeaths)));
+        CreateDataSet(accumulationLineConfig, Color.Green, "Recovered", OverallStats.Records.Select(i => (i.Date, i.AccumulatedRecovered)));
+        CreateDataSet(accumulationLineConfig, Color.Blue, "Current", OverallStats.Records.Select(i => (i.Date, i.CurrentlyActive)));
+    }
+
+    private void ConfigureAccumulationChart() {
+        accumulationLineConfig = new LineConfig {
+            Options = new LineOptions {
+                Responsive = true,
+                Title = new OptionsTitle {
+                    Display = true,
+                    Text = "Accumulated Stats",
+                },
+                Legend = new Legend {
+                    Position = Position.Top,
+                    Labels = new LegendLabelConfiguration {
+                        UsePointStyle = true,
+                    }
+                },
+                Tooltips = new Tooltips {
+                    Mode = InteractionMode.Nearest,
+                    Intersect = false,
+                },
+                Scales = new Scales {
+                    xAxes = new List<CartesianAxis> {
+                        new TimeAxis {
+                            Distribution = TimeDistribution.Linear,
+                            Ticks = new TimeTicks {
+                                Source = TickSource.Data,
+                            },
+                            Time = new TimeOptions {
+                                Unit = TimeMeasurement.Day,
+                                Round = TimeMeasurement.Day,
+                                TooltipFormat = "DD/MM/YYYY",
+                            },
+                        },
+                    },
+                },
+                Hover = new LineOptionsHover {
+                    Intersect = true,
+                    Mode = InteractionMode.Y,
+                }
+            }
+        };
+    }
+
+    private void CreateDailyChart() {
+        ConfigureDailyChart();
+        CreateDataSet(dailyBarConfig, Color.Orange, "Confirmed", OverallStats.Records.Select(i => (i.Date, i.NewConfirmed)));
+    }
+
+    private void ConfigureDailyChart() {
+        dailyBarConfig = new BarConfig {
+            Options = new BarOptions {
+                Responsive = true,
+                Title = new OptionsTitle {
+                    Display = true,
+                    Text = "New cases per day",
+                },
+                Legend = new Legend {
+                    Position = Position.Top,
+                    Labels = new LegendLabelConfiguration {
+                        UsePointStyle = true,
+                    }
+                },
+                Tooltips = new Tooltips {
+                    Mode = InteractionMode.Nearest,
+                    Intersect = false,
+                },
+                Scales = new BarScales {
+                    XAxes = new List<CartesianAxis> {
+                        new TimeAxis {
+                            Distribution = TimeDistribution.Linear,
+                            Ticks = new TimeTicks {
+                                Source = TickSource.Data,
+                            },
+                            Time = new TimeOptions {
+                                Unit = TimeMeasurement.Day,
+                                Round = TimeMeasurement.Day,
+                                TooltipFormat = "DD/MM/YYYY",
+                            },
+                            Offset = true,
+                        },
+                    },
+                },
+            }
+        };
+    }
+
+    private void CreateDataSet(LineConfig lineConfig, Color colour, string name, IEnumerable<(DateTime Date, int Value)> data) {
+        var dataSet = new LineDataset<TimeTuple<int>> {
+            BorderColor = ColorUtil.FromDrawingColor(colour),
+            Label = name,
+            Fill = false,
+            BorderWidth = 3,
+            PointRadius = 3,
+            PointBorderWidth = 1,
+            SteppedLine = SteppedLine.False,
+        };
+
+        dataSet.AddRange(data.Select(i => new TimeTuple<int>(new Moment(i.Date), i.Value)));
+
+        lineConfig.Data.Datasets.Add(dataSet);
+    }
+
+    private void CreateDataSet(BarConfig barConfig, Color colour, string name, IEnumerable<(DateTime Date, int Value)> data) {
+        var dataSet = new BarDataset<TimeTuple<int>> {
+            BackgroundColor = ColorUtil.FromDrawingColor(colour),
+            Label = name,
+        };
+
+        dataSet.AddRange(data.Select(i => new TimeTuple<int>(new Moment(i.Date), i.Value)));
+
+        barConfig.Data.Datasets.Add(dataSet);
+    }
+}
