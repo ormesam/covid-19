@@ -13,5 +13,29 @@ namespace Common {
         public CountryDto() {
             Records = new List<RecordDto>();
         }
+
+        public int GetEstimatedRecovered(RecordDto record) {
+            // Assuming it takes on average 2 weeks to recover
+            int? numberOfConfirmed = Records
+                .Where(row => row.Date == record.Date.AddDays(-14))
+                .Select(row => row.AccumulatedConfirmed)
+                .SingleOrDefault();
+
+            if (numberOfConfirmed == null) {
+                return record.AccumulatedRecovered;
+            }
+
+            int estimatedRecoveredNotRecorded = numberOfConfirmed.Value - record.AccumulatedDeaths - record.AccumulatedRecovered;
+
+            if (estimatedRecoveredNotRecorded < 0) {
+                estimatedRecoveredNotRecorded = 0;
+            }
+
+            return record.AccumulatedRecovered + estimatedRecoveredNotRecorded;
+        }
+
+        public int GetEstimatedCurrent(RecordDto record) {
+            return record.AccumulatedConfirmed - GetEstimatedRecovered(record) - record.AccumulatedDeaths;
+        }
     }
 }

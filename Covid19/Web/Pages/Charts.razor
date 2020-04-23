@@ -26,10 +26,15 @@
                 <strong>
                     @Country.Name:
                     <span class="confirmed">@Country.LastRecord?.AccumulatedConfirmed.ToString("n0") Confirmed</span> /
-                    <span class="recovered">@Country.LastRecord?.AccumulatedRecovered.ToString("n0") Recovered</span> /
+                    <span class="recovered">
+                        @Country.LastRecord?.AccumulatedRecovered.ToString("n0") Recovered (@Country.GetEstimatedRecovered(Country.LastRecord).ToString("n0") estimate)
+                    </span> /
                     <span class="deaths">@Country.LastRecord?.AccumulatedDeaths.ToString("n0") Deaths</span> /
-                    <span class="current">@Country.LastRecord?.CurrentlyActive.ToString("n0") Current</span>
+                    <span class="current">@Country.LastRecord?.CurrentlyActive.ToString("n0") Current (@Country.GetEstimatedCurrent(Country.LastRecord).ToString("n0") estimate)</span> /
                 </strong>
+            </p>
+            <p>
+                Estimated recovery stats are calculated based on a <strong>2 week</strong> recovery time.
             </p>
         </div>
     </div>
@@ -75,7 +80,9 @@
         CreateDataSet(accumulationLineConfig, Color.Orange, "Confirmed", Country.Records.Select(i => (i.Date, i.AccumulatedConfirmed)));
         CreateDataSet(accumulationLineConfig, Color.Red, "Deaths", Country.Records.Select(i => (i.Date, i.AccumulatedDeaths)));
         CreateDataSet(accumulationLineConfig, Color.Green, "Recovered", Country.Records.Select(i => (i.Date, i.AccumulatedRecovered)));
+        CreateDataSet(accumulationLineConfig, Color.Green, "Estimated Recovered", Country.Records.Select(i => (i.Date, Country.GetEstimatedRecovered(i))), true);
         CreateDataSet(accumulationLineConfig, Color.Blue, "Current", Country.Records.Select(i => (i.Date, i.CurrentlyActive)));
+        CreateDataSet(accumulationLineConfig, Color.Blue, "Estimated Current", Country.Records.Select(i => (i.Date, Country.GetEstimatedCurrent(i))), true);
     }
 
     private void ConfigureAccumulationChart() {
@@ -162,7 +169,7 @@
         };
     }
 
-    private void CreateDataSet(LineConfig lineConfig, Color colour, string name, IEnumerable<(DateTime Date, int Value)> data) {
+    private void CreateDataSet(LineConfig lineConfig, Color colour, string name, IEnumerable<(DateTime Date, int Value)> data, bool useDottedLine = false) {
         var dataSet = new LineDataset<TimeTuple<int>> {
             BorderColor = ColorUtil.FromDrawingColor(colour),
             Label = name,
@@ -172,6 +179,10 @@
             PointBorderWidth = 1,
             SteppedLine = SteppedLine.False,
         };
+
+        if (useDottedLine) {
+            dataSet.BorderDash = new int[2] { 1, 1 };
+        }
 
         dataSet.AddRange(data.Select(i => new TimeTuple<int>(new Moment(i.Date), i.Value)));
 
