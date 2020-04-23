@@ -96,7 +96,7 @@ namespace Api.Controllers {
                     if (currentRecord == null) {
                         await WriteLine($"Creating record for {country.Name} - {record.Date.ToShortDateString()}");
 
-                        context.Record.Add(new Record {
+                        var newRecord = new Record {
                             AccumulatedConfirmed = record.AccumulatedConfirmed,
                             CountryId = country.CountryId,
                             Date = record.Date,
@@ -105,10 +105,12 @@ namespace Api.Controllers {
                             NewConfirmed = newConfirmed,
                             NewRecovered = newRecovered,
                             NewDeaths = newDeaths,
-                        });
+                        };
 
+                        context.Record.Add(newRecord);
                         context.SaveChanges();
 
+                        currentRecords.Add(newRecord);
                         newRecordCount++;
                     } else if (record.AccumulatedConfirmed != currentRecord.AccumulatedConfirmed ||
                         record.AccumulatedRecovered != currentRecord.AccumulatedRecovered ||
