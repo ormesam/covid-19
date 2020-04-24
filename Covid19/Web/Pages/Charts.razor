@@ -175,13 +175,11 @@
             Label = name,
             Fill = false,
             BorderWidth = 3,
-            PointRadius = 3,
-            PointBorderWidth = 1,
             SteppedLine = SteppedLine.False,
         };
 
         if (useDottedLine) {
-            dataSet.BorderDash = new int[2] { 1, 1 };
+            dataSet.BorderDash = new int[2] { 2, 2 };
         }
 
         dataSet.AddRange(data.Select(i => new TimeTuple<int>(new Moment(i.Date), i.Value)));
