@@ -15,9 +15,9 @@ namespace Common {
         }
 
         public int GetEstimatedRecovered(RecordDto record) {
-            // Assuming it takes on average 2 weeks to recover
+            // Assuming it takes on average 3 weeks to recover
             int? numberOfConfirmed = Records
-                .Where(row => row.Date == record.Date.AddDays(-14))
+                .Where(row => row.Date == record.Date.AddDays(-21))
                 .Select(row => row.AccumulatedConfirmed)
                 .SingleOrDefault();
 
