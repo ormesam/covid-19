@@ -40,10 +40,13 @@
     </div>
     <div class="row">
         <div class="col-12 col-lg-6">
-            <ChartJsLineChart @ref="accumulationLineChartJs" Config="@accumulationLineConfig" Width="600" Height="300" />
+            <ChartJsLineChart @ref="accumulationLineChartJs" Config="@accumulationLineConfig" Width="600" Height="400" />
         </div>
         <div class="col-12 col-lg-6">
-            <ChartJsBarChart @ref="dailyBarChartJs" Config="@dailyBarConfig" Width="600" Height="300" />
+            <ChartJsBarChart @ref="dailyConfirmedBarChartJs" Config="@dailyConfirmedBarConfig" Width="600" Height="400" />
+        </div>
+        <div class="col-12 col-lg-6">
+            <ChartJsBarChart @ref="dailyDeathsBarChartJs" Config="@dailyDeathsBarConfig" Width="600" Height="400" />
         </div>
     </div>
 }
@@ -56,8 +59,10 @@
     CountryDto Country;
     LineConfig accumulationLineConfig;
     ChartJsLineChart accumulationLineChartJs;
-    BarConfig dailyBarConfig;
-    ChartJsBarChart dailyBarChartJs;
+    BarConfig dailyConfirmedBarConfig;
+    ChartJsBarChart dailyConfirmedBarChartJs;
+    BarConfig dailyDeathsBarConfig;
+    ChartJsBarChart dailyDeathsBarChartJs;
 
     protected override async Task OnInitializedAsync() {
         try {
@@ -72,7 +77,8 @@
         }
 
         CreateAccumulationChart();
-        CreateDailyChart();
+        CreateDailyConfirmedChart();
+        CreateDailyDeathsChart();
     }
 
     private void CreateAccumulationChart() {
@@ -126,18 +132,23 @@
         };
     }
 
-    private void CreateDailyChart() {
-        ConfigureDailyChart();
-        CreateDataSet(dailyBarConfig, Color.Orange, "Confirmed", Country.Records.Select(i => (i.Date, i.NewConfirmed)));
+    private void CreateDailyConfirmedChart() {
+        dailyConfirmedBarConfig = ConfigureDailyChart("New cases per day");
+        CreateDataSet(dailyConfirmedBarConfig, Color.Orange, "Confirmed", Country.Records.Select(i => (i.Date, i.NewConfirmed)));
     }
 
-    private void ConfigureDailyChart() {
-        dailyBarConfig = new BarConfig {
+    private void CreateDailyDeathsChart() {
+        dailyDeathsBarConfig = ConfigureDailyChart("Deaths per day");
+        CreateDataSet(dailyDeathsBarConfig, Color.Red, "Deaths", Country.Records.Select(i => (i.Date, i.NewDeaths)));
+    }
+
+    private BarConfig ConfigureDailyChart(string title) {
+        return new BarConfig {
             Options = new BarOptions {
                 Responsive = true,
                 Title = new OptionsTitle {
                     Display = true,
-                    Text = "New cases per day",
+                    Text = title,
                 },
                 Legend = new Legend {
                     Position = Position.Top,
