@@ -54,7 +54,7 @@
 
     protected override async Task OnInitializedAsync() {
         try {
-            OverallStats = await Http.GetJsonAsync<WorldDto>(Constants.ApiUrl + "/world");
+            OverallStats = await Http.GetFromJsonAsync<WorldDto>(Constants.ApiUrl + "/world");
         } catch (Exception) {
         }
 

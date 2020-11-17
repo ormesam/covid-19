@@ -72,7 +72,7 @@
         .Where(i => string.IsNullOrEmpty(SearchText) || i.Name.StartsWith(SearchText.Trim(), StringComparison.OrdinalIgnoreCase));
 
     protected override async Task OnInitializedAsync() {
-        Countries = await Http.GetJsonAsync<IEnumerable<CountryOverviewDto>>(Constants.ApiUrl + "/countries");
+        Countries = await Http.GetFromJsonAsync<IEnumerable<CountryOverviewDto>>(Constants.ApiUrl + "/countries");
     }
 
     private void Search() {
